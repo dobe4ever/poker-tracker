@@ -29,9 +29,12 @@ export default function EditSessionModal({ session, onClose, onSaved }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSave = async () => {
+    if (handsPlayed <= 0) {
+      return alert("Hands played must be greater than 0");
+    }
+
     setIsSubmitting(true);
 
-    // Recalculate all stats based on the new edited inputs
     const stats = calculateSessionStats({
       startStack,
       endStack,
@@ -53,7 +56,7 @@ export default function EditSessionModal({ session, onClose, onSaved }: Props) {
         hands_played: handsPlayed,
         opponent_1: opp1 || null,
         opponent_2: opp2 || null,
-        ...stats // Save the newly calculated math
+        ...stats
       })
       .eq("id", session.id);
 
