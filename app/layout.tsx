@@ -90,8 +90,6 @@ export default function RootLayout({
       </head>
       <body
         className="antialiased"
-        {/* className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ backgroundColor: "var(--surface-0)" }} */}
       >
         <TelegramProvider>
           {children}
