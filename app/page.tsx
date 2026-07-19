@@ -21,7 +21,6 @@
   
 //   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
-//   // Global Filter State
 //   const [filters, setFilters] = useState<FilterState>({
 //     game: "all",
 //     stake: "all",
@@ -56,12 +55,13 @@
 //     <div className="flex flex-col h-screen w-full overflow-hidden">
 //       <Header onAddClick={() => setIsStartModalOpen(true)} />
       
-//       <main className="flex-1 overflow-y-auto pt-20 pb-8 px-4 space-y-4 w-full max-w-md mx-auto">
+//       {/* Changed space-y-4 to space-y-3 for tighter mobile margins */}
+//       <main className="flex-1 overflow-y-auto pt-20 pb-8 px-4 space-y-3 w-full max-w-md mx-auto">
         
 //         {/* 1. Totals Boxes */}
 //         <TotalsBoxes refreshTrigger={refreshTrigger} filters={filters} />
 
-//         {/* 2. Chart Widget (Contains the filter controls) */}
+//         {/* 2. Chart Widget */}
 //         <ChartWidget refreshTrigger={refreshTrigger} filters={filters} setFilters={setFilters} />
 
 //         {/* 3. Active Sessions */}
@@ -95,6 +95,7 @@
 
 
 
+
 // app/page.tsx
 
 "use client";
@@ -118,11 +119,20 @@ export default function Home() {
   
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
+  // Initialize filter state
   const [filters, setFilters] = useState<FilterState>({
+    userId: "all", // Defaults to all, will auto-adjust to logged in user below
     game: "all",
     stake: "all",
     opponent: "all"
   });
+
+  // Automatically default filter to the logged-in user once their Telegram data loads
+  useEffect(() => {
+    if (user?.id) {
+      setFilters(prev => ({ ...prev, userId: user.id.toString() }));
+    }
+  }, [user?.id]);
 
   const fetchActiveSessions = async () => {
     if (!user?.id) return;
@@ -152,7 +162,6 @@ export default function Home() {
     <div className="flex flex-col h-screen w-full overflow-hidden">
       <Header onAddClick={() => setIsStartModalOpen(true)} />
       
-      {/* Changed space-y-4 to space-y-3 for tighter mobile margins */}
       <main className="flex-1 overflow-y-auto pt-20 pb-8 px-4 space-y-3 w-full max-w-md mx-auto">
         
         {/* 1. Totals Boxes */}
