@@ -18,7 +18,7 @@ const GAMES: GameType[] = ["reg", "prog", "2-7"];
 export default function StartSessionModal({ isOpen, onClose, onSessionStarted }: Props) {
   const { user } = useTelegram();
   const [stake, setStake] = useState<number>(2);
-  const [game, setGame] = useState<GameType>("reg");
+  const [game, setGame] = useState<GameType>("prog"); // <-- Changed default to 'prog'
   const [rake, setRake] = useState<number>(4);
   const [startStack, setStartStack] = useState<number>(400);
   const [opp1, setOpp1] = useState("");
