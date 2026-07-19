@@ -14,10 +14,10 @@ import ActiveSession from "@/components/ActiveSession";
 export default function Home() {
   const { user } = useTelegram();
   const [isStartModalOpen, setIsStartModalOpen] = useState(false);
-  const [activeSession, setActiveSession] = useState<PokerSession | null>(null);
+  const [activeSessions, setActiveSessions] = useState<PokerSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchActiveSession = async () => {
+  const fetchActiveSessions = async () => {
     if (!user?.id) return;
     
     const { data, error } = await supabase
@@ -25,20 +25,20 @@ export default function Home() {
       .select("*")
       .eq("telegram_id", user.id.toString())
       .eq("status", "in_progress")
-      .single();
+      .order("created_at", { ascending: false }); // Newest sessions at the top
 
     if (!error && data) {
-      setActiveSession(data as PokerSession);
+      setActiveSessions(data as PokerSession[]);
     } else {
-      setActiveSession(null);
+      setActiveSessions([]);
     }
     setIsLoading(false);
   };
 
-  // Fetch session when Telegram user loads
+  // Fetch sessions when Telegram user loads
   useEffect(() => {
     if (user?.id) {
-      fetchActiveSession();
+      fetchActiveSessions();
     }
   }, [user?.id]);
 
@@ -48,13 +48,14 @@ export default function Home() {
       
       <main className="flex-1 overflow-y-auto pt-20 pb-8 px-4 space-y-6 w-full max-w-md mx-auto">
         
-        {/* Show Active Session if it exists, otherwise show loading/nothing */}
-        {!isLoading && activeSession && (
+        {/* Map over all active sessions and render a widget for each */}
+        {!isLoading && activeSessions.map((session) => (
           <ActiveSession 
-            session={activeSession} 
-            onSessionUpdated={fetchActiveSession} 
+            key={session.id}
+            session={session} 
+            onSessionUpdated={fetchActiveSessions} 
           />
-        )}
+        ))}
 
         {/* Placeholders for the other widgets we will build next */}
         <Widget title="Totals Boxes" />
@@ -65,7 +66,7 @@ export default function Home() {
       <StartSessionModal 
         isOpen={isStartModalOpen} 
         onClose={() => setIsStartModalOpen(false)}
-        onSessionStarted={fetchActiveSession}
+        onSessionStarted={fetchActiveSessions}
       />
     </div>
   );
