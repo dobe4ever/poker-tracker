@@ -18,16 +18,38 @@ const GAMES: GameType[] = ["reg", "prog", "2-7"];
 export default function StartSessionModal({ isOpen, onClose, onSessionStarted }: Props) {
   const { user } = useTelegram();
   const [stake, setStake] = useState<number>(2);
-  const [game, setGame] = useState<GameType>("prog"); // <-- Changed default to 'prog'
+  const [game, setGame] = useState<GameType>("prog");
   const [rake, setRake] = useState<number>(4);
   const [startStack, setStartStack] = useState<number>(400);
   const [opp1, setOpp1] = useState("");
   const [opp2, setOpp2] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [historicalOpponents, setHistoricalOpponents] = useState<string[]>([]);
 
   useEffect(() => {
     setStartStack(stake * 200);
   }, [stake]);
+
+  // Fetch unique opponents for the autocomplete dropdown
+  useEffect(() => {
+    const fetchOpponents = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("sessions")
+        .select("opponent_1, opponent_2")
+        .eq("telegram_id", user.id.toString());
+      
+      if (data) {
+        const opps = new Set<string>();
+        data.forEach(d => {
+          if (d.opponent_1) opps.add(d.opponent_1);
+          if (d.opponent_2) opps.add(d.opponent_2);
+        });
+        setHistoricalOpponents(Array.from(opps));
+      }
+    };
+    if (isOpen) fetchOpponents();
+  }, [isOpen, user?.id]);
 
   if (!isOpen) return null;
 
@@ -90,13 +112,32 @@ export default function StartSessionModal({ isOpen, onClose, onSessionStarted }:
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block text-xs font-semibold text-zinc-500 mb-1">OPPONENT 1</label>
-              <input type="text" placeholder="Optional" value={opp1} onChange={(e) => setOpp1(e.target.value)} className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2.5 text-sm outline-none" />
+              <input 
+                list="opponents"
+                type="text" 
+                placeholder="Optional" 
+                value={opp1} 
+                onChange={(e) => setOpp1(e.target.value)} 
+                className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2.5 text-sm outline-none" 
+              />
             </div>
             <div className="flex-1">
               <label className="block text-xs font-semibold text-zinc-500 mb-1">OPPONENT 2</label>
-              <input type="text" placeholder="Optional" value={opp2} onChange={(e) => setOpp2(e.target.value)} className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2.5 text-sm outline-none" />
+              <input 
+                list="opponents"
+                type="text" 
+                placeholder="Optional" 
+                value={opp2} 
+                onChange={(e) => setOpp2(e.target.value)} 
+                className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2.5 text-sm outline-none" 
+              />
             </div>
           </div>
+          
+          {/* Datalist for autocomplete */}
+          <datalist id="opponents">
+            {historicalOpponents.map(opp => <option key={opp} value={opp} />)}
+          </datalist>
         </div>
 
         <div className="flex gap-3 mt-6">
