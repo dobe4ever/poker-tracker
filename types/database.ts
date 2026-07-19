@@ -10,6 +10,7 @@ export interface PokerSession {
   
   // Base Inputs
   stake: number;
+  rake_percent: number;
   game: GameType;
   opponent_1?: string | null;
   opponent_2?: string | null;
