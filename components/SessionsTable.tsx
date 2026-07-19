@@ -7,7 +7,11 @@ import { useTelegram } from "./TelegramProvider";
 import { PokerSession } from "@/types/database";
 import EditSessionModal from "./EditSessionModal";
 
-export default function SessionsTable() {
+interface Props {
+  refreshTrigger: number;
+}
+
+export default function SessionsTable({ refreshTrigger }: Props) {
   const { user } = useTelegram();
   const [sessions, setSessions] = useState<PokerSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,14 +47,18 @@ export default function SessionsTable() {
     setLoading(false);
   };
 
+  // Re-fetch page 0 whenever the refreshTrigger changes
   useEffect(() => {
-    if (user?.id) fetchSessions(0);
-  }, [user?.id]);
+    if (user?.id) {
+      setPage(0);
+      fetchSessions(0);
+    }
+  }, [user?.id, refreshTrigger]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this session?")) return;
     await supabase.from("sessions").delete().eq("id", id);
-    fetchSessions(0); // Refresh from page 0
+    fetchSessions(0);
     setPage(0);
   };
 
@@ -66,7 +74,6 @@ export default function SessionsTable() {
       </div>
 
       <div className="w-full">
-        {/* Table Header */}
         <div className="grid grid-cols-[1fr_1fr_1fr_1.5fr_1.5fr_auto] gap-2 px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
           <div>Date</div>
           <div>Stake</div>
@@ -76,7 +83,6 @@ export default function SessionsTable() {
           <div className="w-12 text-center">Act</div>
         </div>
 
-        {/* Table Body */}
         <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
           {sessions.map((session) => (
             <div key={session.id} className="grid grid-cols-[1fr_1fr_1fr_1.5fr_1.5fr_auto] gap-2 px-4 py-3 items-center text-xs text-zinc-700 dark:text-zinc-300">
@@ -105,7 +111,6 @@ export default function SessionsTable() {
         </div>
       </div>
 
-      {/* Pagination Footer */}
       {hasMore && (
         <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 text-center">
           <button 
@@ -122,7 +127,6 @@ export default function SessionsTable() {
         </div>
       )}
 
-      {/* Edit Modal */}
       <EditSessionModal 
         session={editingSession} 
         onClose={() => setEditingSession(null)} 
