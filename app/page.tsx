@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import Widget from "@/components/Widget";
 import StartSessionModal from "@/components/StartSessionModal";
 import ActiveSession from "@/components/ActiveSession";
+import SessionsTable from "@/components/SessionsTable";
 
 export default function Home() {
   const { user } = useTelegram();
@@ -25,7 +26,7 @@ export default function Home() {
       .select("*")
       .eq("telegram_id", user.id.toString())
       .eq("status", "in_progress")
-      .order("created_at", { ascending: false }); // Newest sessions at the top
+      .order("created_at", { ascending: false });
 
     if (!error && data) {
       setActiveSessions(data as PokerSession[]);
@@ -35,7 +36,6 @@ export default function Home() {
     setIsLoading(false);
   };
 
-  // Fetch sessions when Telegram user loads
   useEffect(() => {
     if (user?.id) {
       fetchActiveSessions();
@@ -48,7 +48,6 @@ export default function Home() {
       
       <main className="flex-1 overflow-y-auto pt-20 pb-8 px-4 space-y-6 w-full max-w-md mx-auto">
         
-        {/* Map over all active sessions and render a widget for each */}
         {!isLoading && activeSessions.map((session) => (
           <ActiveSession 
             key={session.id}
@@ -57,10 +56,12 @@ export default function Home() {
           />
         ))}
 
-        {/* Placeholders for the other widgets we will build next */}
         <Widget title="Totals Boxes" />
         <Widget title="Charts" />
-        <Widget title="Sessions Table" />
+        
+        {/* Replaced the placeholder with the actual table */}
+        <SessionsTable />
+        
       </main>
 
       <StartSessionModal 
