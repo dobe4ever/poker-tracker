@@ -240,7 +240,7 @@ export default function StartSessionModal({ isOpen, onClose, onSessionStarted }:
   const inputStyle = { backgroundColor: "var(--surface-2)", color: "var(--text-primary)", border: "1px solid var(--surface-3)" };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" >
       <div
         className="rounded-2xl w-full max-w-sm p-6"
         style={{ backgroundColor: "var(--surface-1)", border: "1px solid var(--surface-3)", boxShadow: "var(--shadow-modal)" }}
