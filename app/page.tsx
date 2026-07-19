@@ -17,6 +17,9 @@ export default function Home() {
   const [isStartModalOpen, setIsStartModalOpen] = useState(false);
   const [activeSessions, setActiveSessions] = useState<PokerSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Global refresh trigger
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const fetchActiveSessions = async () => {
     if (!user?.id) return;
@@ -46,21 +49,33 @@ export default function Home() {
     <div className="flex flex-col h-screen w-full overflow-hidden">
       <Header onAddClick={() => setIsStartModalOpen(true)} />
       
-      <main className="flex-1 overflow-y-auto pt-20 pb-8 px-4 space-y-6 w-full max-w-md mx-auto">
+      <main className="flex-1 overflow-y-auto pt-20 pb-8 px-4 space-y-4 w-full max-w-md mx-auto">
         
-        {!isLoading && activeSessions.map((session) => (
-          <ActiveSession 
-            key={session.id}
-            session={session} 
-            onSessionUpdated={fetchActiveSessions} 
-          />
-        ))}
-
+        {/* 1. Totals Boxes Placeholder */}
         <Widget title="Totals Boxes" />
-        <Widget title="Charts" />
+
+        {/* 2. Filters Bar Placeholder */}
+        <Widget title="Filters Bar" />
+
+        {/* 3. Chart Placeholder */}
+        <Widget title="Chart" />
+
+        {/* 4. Active Sessions (Trello Cards) */}
+        {!isLoading && activeSessions.length > 0 && (
+          <div className="space-y-2">
+            {activeSessions.map((session) => (
+              <ActiveSession 
+                key={session.id}
+                session={session} 
+                onSessionUpdated={fetchActiveSessions}
+                onSessionEnded={() => setRefreshTrigger(prev => prev + 1)} 
+              />
+            ))}
+          </div>
+        )}
         
-        {/* Replaced the placeholder with the actual table */}
-        <SessionsTable />
+        {/* 5. Sessions Table */}
+        <SessionsTable refreshTrigger={refreshTrigger} />
         
       </main>
 
