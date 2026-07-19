@@ -106,10 +106,20 @@ interface Props {
 const formatNum = (num: number, decimals: number = 0) =>
   num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
+function abbreviateNum(num: number, decimals: number = 1): string {
+  if (Math.abs(num) >= 1000) {
+    return (num / 1000).toFixed(decimals) + "k";
+  }
+  if (Math.abs(num) >= 1) {
+    return num.toFixed(decimals);
+  }
+  return num.toFixed(decimals);
+}
+
 function ColorValue({ val, decimals = 1 }: { val: number; decimals?: number }) {
   const color = val > 0 ? "var(--positive)" : val < 0 ? "var(--negative)" : "var(--text-primary)";
   const sign = val > 0 ? "+" : "";
-  return <span className="num" style={{ color }}>{sign}{formatNum(val, decimals)}</span>;
+  return <span className="num" style={{ color }}>{sign}{abbreviateNum(val, decimals)}</span>;
 }
 
 function Stat({
@@ -208,12 +218,12 @@ export default function TotalsBoxes({ refreshTrigger, filters }: Props) {
         </div>
       ) : (
         <div className="grid grid-cols-3">
-          <Stat label="Hands" value={<span style={{ color: "var(--text-primary)" }}>{formatNum(totals.hands)}</span>} />
-          <Stat label="Win" value={<ColorValue val={totals.win} />} border="left" />
-          <Stat label="Win/100" value={<ColorValue val={totals.winPer100} />} border="left" />
-          <Stat label="Hours" value={<span style={{ color: "var(--text-primary)" }}>{formatNum(totals.hours, 1)}</span>} border="top" />
-          <Stat label="Win/Hr" value={<ColorValue val={totals.winPerHour} />} border="top-left" />
-          <Stat label="Pts/100" value={<ColorValue val={totals.ptsPer100} />} border="top-left" />
+          <Stat label="Hands" value={<span style={{ color: "var(--text-primary)" }}>{abbreviateNum(totals.hands, 1)}</span>} />
+          <Stat label="Win" value={<ColorValue val={totals.win} decimals={1} />} border="left" />
+          <Stat label="Win/100" value={<ColorValue val={totals.winPer100} decimals={0} />} border="left" />
+          <Stat label="Hours" value={<span style={{ color: "var(--text-primary)" }}>{abbreviateNum(totals.hours, 0)}</span>} border="top" />
+          <Stat label="Win/Hr" value={<ColorValue val={totals.winPerHour} decimals={1} />} border="top-left" />
+          <Stat label="Pts/100" value={<ColorValue val={totals.ptsPer100} decimals={0} />} border="top-left" />
         </div>
       )}
     </div>
