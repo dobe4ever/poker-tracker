@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { PokerSession } from "@/types/database";
+import { calculateSessionStats } from "@/lib/calculations";
 
 interface Props {
   session: PokerSession;
@@ -33,13 +34,28 @@ export default function ActiveSession({ session, onSessionUpdated }: Props) {
   };
 
   const handleFinish = async () => {
+    const endTime = new Date().toISOString();
+    
+    // Run our math logic
+    const stats = calculateSessionStats({
+      startStack: session.start_stack,
+      endStack: endStack,
+      handsPlayed: handsPlayed,
+      startTime: session.start_time,
+      endTime: endTime,
+      stake: session.stake,
+      rakePercent: session.rake_percent || 4,
+    });
+
+    // Save everything to the database
     await supabase
       .from("sessions")
       .update({
         status: "completed",
         end_stack: endStack,
         hands_played: handsPlayed,
-        end_time: new Date().toISOString(),
+        end_time: endTime,
+        ...stats // This spreads all 8 calculated fields into the update payload
       })
       .eq("id", session.id);
       
@@ -56,7 +72,7 @@ export default function ActiveSession({ session, onSessionUpdated }: Props) {
             Active Session
           </h2>
           <p className="text-xs text-blue-700 dark:text-blue-500 mt-1">
-            {session.game.toUpperCase()} • {session.stake}pp
+            {session.game.toUpperCase()} • {session.stake}pp • {session.rake_percent}% Rake
             {session.opponent_1 && ` • vs ${session.opponent_1}`}
             {session.opponent_2 && `, ${session.opponent_2}`}
           </p>
