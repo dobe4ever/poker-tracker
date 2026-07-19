@@ -7,11 +7,11 @@ import { useTelegram } from "@/components/TelegramProvider";
 import { PokerSession } from "@/types/database";
 
 import Header from "@/components/Header";
-import Widget from "@/components/Widget";
 import StartSessionModal from "@/components/StartSessionModal";
 import ActiveSession from "@/components/ActiveSession";
 import SessionsTable from "@/components/SessionsTable";
 import TotalsBoxes from "@/components/TotalsBoxes";
+import ChartWidget, { FilterState } from "@/components/ChartWidget";
 
 export default function Home() {
   const { user } = useTelegram();
@@ -20,6 +20,13 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  // Global Filter State
+  const [filters, setFilters] = useState<FilterState>({
+    game: "all",
+    stake: "all",
+    opponent: "all"
+  });
 
   const fetchActiveSessions = async () => {
     if (!user?.id) return;
@@ -52,15 +59,12 @@ export default function Home() {
       <main className="flex-1 overflow-y-auto pt-20 pb-8 px-4 space-y-4 w-full max-w-md mx-auto">
         
         {/* 1. Totals Boxes */}
-        <TotalsBoxes refreshTrigger={refreshTrigger} />
+        <TotalsBoxes refreshTrigger={refreshTrigger} filters={filters} />
 
-        {/* 2. Filters Bar Placeholder */}
-        <Widget title="Filters Bar" />
+        {/* 2. Chart Widget (Contains the filter controls) */}
+        <ChartWidget refreshTrigger={refreshTrigger} filters={filters} setFilters={setFilters} />
 
-        {/* 3. Chart Placeholder */}
-        <Widget title="Chart" />
-
-        {/* 4. Active Sessions */}
+        {/* 3. Active Sessions */}
         {!isLoading && activeSessions.length > 0 && (
           <div className="space-y-2">
             {activeSessions.map((session) => (
@@ -74,8 +78,8 @@ export default function Home() {
           </div>
         )}
         
-        {/* 5. Sessions Table */}
-        <SessionsTable refreshTrigger={refreshTrigger} />
+        {/* 4. Sessions Table */}
+        <SessionsTable refreshTrigger={refreshTrigger} filters={filters} />
         
       </main>
 
