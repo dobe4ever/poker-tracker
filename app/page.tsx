@@ -11,6 +11,7 @@ import Widget from "@/components/Widget";
 import StartSessionModal from "@/components/StartSessionModal";
 import ActiveSession from "@/components/ActiveSession";
 import SessionsTable from "@/components/SessionsTable";
+import TotalsBoxes from "@/components/TotalsBoxes";
 
 export default function Home() {
   const { user } = useTelegram();
@@ -18,7 +19,6 @@ export default function Home() {
   const [activeSessions, setActiveSessions] = useState<PokerSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Global refresh trigger
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const fetchActiveSessions = async () => {
@@ -51,8 +51,8 @@ export default function Home() {
       
       <main className="flex-1 overflow-y-auto pt-20 pb-8 px-4 space-y-4 w-full max-w-md mx-auto">
         
-        {/* 1. Totals Boxes Placeholder */}
-        <Widget title="Totals Boxes" />
+        {/* 1. Totals Boxes */}
+        <TotalsBoxes refreshTrigger={refreshTrigger} />
 
         {/* 2. Filters Bar Placeholder */}
         <Widget title="Filters Bar" />
@@ -60,7 +60,7 @@ export default function Home() {
         {/* 3. Chart Placeholder */}
         <Widget title="Chart" />
 
-        {/* 4. Active Sessions (Trello Cards) */}
+        {/* 4. Active Sessions */}
         {!isLoading && activeSessions.length > 0 && (
           <div className="space-y-2">
             {activeSessions.map((session) => (
