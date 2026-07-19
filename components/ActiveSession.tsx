@@ -9,34 +9,34 @@ import { calculateSessionStats } from "@/lib/calculations";
 interface Props {
   session: PokerSession;
   onSessionUpdated: () => void;
+  onSessionEnded: () => void;
 }
 
-export default function ActiveSession({ session, onSessionUpdated }: Props) {
-  const [isFinishing, setIsFinishing] = useState(false);
+export default function ActiveSession({ session, onSessionUpdated, onSessionEnded }: Props) {
+  const [modalView, setModalView] = useState<"none" | "addChips" | "endSession">("none");
+  
+  const [addAmount, setAddAmount] = useState<number>(0);
   const [endStack, setEndStack] = useState<number>(session.start_stack);
   const [handsPlayed, setHandsPlayed] = useState<number>(0);
-  
-  const [isAddingChips, setIsAddingChips] = useState(false);
-  const [addAmount, setAddAmount] = useState<number>(0);
+
+  const formatTime = (dateString: string) => {
+    const d = new Date(dateString);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   const handleAddChips = async () => {
-    if (addAmount <= 0) return setIsAddingChips(false);
-    
+    if (addAmount <= 0) return setModalView("none");
     const newStack = session.start_stack + addAmount;
-    await supabase
-      .from("sessions")
-      .update({ start_stack: newStack })
-      .eq("id", session.id);
-      
-    setIsAddingChips(false);
+    await supabase.from("sessions").update({ start_stack: newStack }).eq("id", session.id);
+    setModalView("none");
     setAddAmount(0);
     onSessionUpdated();
   };
 
   const handleFinish = async () => {
+    if (handsPlayed <= 0) return alert("Hands played must be greater than 0");
+
     const endTime = new Date().toISOString();
-    
-    // Run our math logic
     const stats = calculateSessionStats({
       startStack: session.start_stack,
       endStack: endStack,
@@ -47,91 +47,96 @@ export default function ActiveSession({ session, onSessionUpdated }: Props) {
       rakePercent: session.rake_percent || 4,
     });
 
-    // Save everything to the database
-    await supabase
-      .from("sessions")
-      .update({
-        status: "completed",
-        end_stack: endStack,
-        hands_played: handsPlayed,
-        end_time: endTime,
-        ...stats // This spreads all 8 calculated fields into the update payload
-      })
-      .eq("id", session.id);
+    await supabase.from("sessions").update({
+      status: "completed",
+      end_stack: endStack,
+      hands_played: handsPlayed,
+      end_time: endTime,
+      ...stats
+    }).eq("id", session.id);
       
-    setIsFinishing(false);
+    setModalView("none");
     onSessionUpdated();
+    onSessionEnded(); // Triggers the global refresh
   };
 
   return (
-    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-5 shadow-sm">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h2 className="text-lg font-bold text-blue-900 dark:text-blue-400 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
-            Active Session
-          </h2>
-          <p className="text-xs text-blue-700 dark:text-blue-500 mt-1">
-            {session.game.toUpperCase()} • {session.stake}pp • {session.rake_percent}% Rake
-            {session.opponent_1 && ` • vs ${session.opponent_1}`}
-            {session.opponent_2 && `, ${session.opponent_2}`}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-xl p-4 mb-4 border border-blue-100 dark:border-blue-900/50">
-        <div>
-          <p className="text-xs font-semibold text-zinc-500">CURRENT STACK</p>
-          <p className="text-2xl font-bold text-zinc-900 dark:text-white">{session.start_stack}</p>
-        </div>
+    <>
+      {/* The Compact Trello-style Card */}
+      <div className="bg-white dark:bg-zinc-900 border-l-4 border-l-green-500 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 shadow-sm flex items-center justify-between">
         
-        {isAddingChips ? (
+        {/* Left Side: Info */}
+        <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <input 
-              type="number" 
-              value={addAmount || ""}
-              onChange={(e) => setAddAmount(Number(e.target.value))}
-              className="w-20 bg-zinc-100 dark:bg-zinc-800 rounded p-1.5 text-sm outline-none"
-              placeholder="+ Amt"
-            />
-            <button onClick={handleAddChips} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm font-bold">✓</button>
-            <button onClick={() => setIsAddingChips(false)} className="bg-zinc-200 dark:bg-zinc-700 px-3 py-1.5 rounded text-sm font-bold">✕</button>
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="text-sm font-bold text-zinc-900 dark:text-white">
+              {session.game.toUpperCase()} {session.stake}pp
+            </span>
           </div>
-        ) : (
+          <span className="text-[11px] text-zinc-500 ml-4">
+            Started {formatTime(session.start_time)}
+          </span>
+        </div>
+
+        {/* Right Side: Stack & Actions */}
+        <div className="flex items-center gap-3">
+          <div className="text-right mr-1">
+            <span className="text-[10px] font-semibold text-zinc-400 block leading-none">STACK</span>
+            <span className="text-sm font-bold text-zinc-900 dark:text-white">{session.start_stack}</span>
+          </div>
+          
           <button 
-            onClick={() => setIsAddingChips(true)}
-            className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-blue-200 transition-colors"
+            onClick={() => setModalView("addChips")}
+            className="w-8 h-8 flex items-center justify-center bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full font-bold hover:bg-blue-200 transition-colors"
           >
-            + Add Chips
+            +
           </button>
-        )}
+          
+          <button 
+            onClick={() => setModalView("endSession")}
+            className="w-8 h-8 flex items-center justify-center bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded-full font-bold hover:bg-red-200 transition-colors"
+          >
+            ⏹
+          </button>
+        </div>
       </div>
 
-      {isFinishing ? (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-blue-100 dark:border-blue-900/50 space-y-3">
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="block text-xs font-semibold text-zinc-500 mb-1">END STACK</label>
-              <input type="number" value={endStack} onChange={(e) => setEndStack(Number(e.target.value))} className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2 text-sm outline-none" />
+      {/* Add Chips Modal */}
+      {modalView === "addChips" && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-5 w-full max-w-xs shadow-xl">
+            <h3 className="font-bold mb-3 text-zinc-900 dark:text-white">Add Chips</h3>
+            <input type="number" value={addAmount || ""} onChange={(e) => setAddAmount(Number(e.target.value))} className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2.5 text-sm outline-none mb-4" placeholder="Amount" />
+            <div className="flex gap-2">
+              <button onClick={() => setModalView("none")} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-zinc-100 dark:bg-zinc-800">Cancel</button>
+              <button onClick={handleAddChips} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white">Add</button>
             </div>
-            <div className="flex-1">
-              <label className="block text-xs font-semibold text-zinc-500 mb-1">HANDS PLAYED</label>
-              <input type="number" value={handsPlayed} onChange={(e) => setHandsPlayed(Number(e.target.value))} className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2 text-sm outline-none" />
-            </div>
-          </div>
-          <div className="flex gap-2 pt-2">
-            <button onClick={() => setIsFinishing(false)} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-zinc-100 dark:bg-zinc-800">Cancel</button>
-            <button onClick={handleFinish} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-600 text-white">End Session</button>
           </div>
         </div>
-      ) : (
-        <button 
-          onClick={() => setIsFinishing(true)}
-          className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-sm"
-        >
-          Finish Session
-        </button>
       )}
-    </div>
+
+      {/* End Session Modal */}
+      {modalView === "endSession" && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-5 w-full max-w-xs shadow-xl">
+            <h3 className="font-bold mb-4 text-zinc-900 dark:text-white">End Session</h3>
+            <div className="space-y-3 mb-5">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">END STACK</label>
+                <input type="number" value={endStack} onChange={(e) => setEndStack(Number(e.target.value))} className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2.5 text-sm outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">HANDS PLAYED</label>
+                <input type="number" value={handsPlayed || ""} onChange={(e) => setHandsPlayed(Number(e.target.value))} className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2.5 text-sm outline-none" placeholder="Required" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setModalView("none")} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-zinc-100 dark:bg-zinc-800">Cancel</button>
+              <button onClick={handleFinish} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-600 text-white">End Session</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
