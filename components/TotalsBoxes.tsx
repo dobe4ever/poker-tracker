@@ -27,7 +27,6 @@
 //         .eq("telegram_id", user.id.toString())
 //         .eq("status", "completed");
 
-//       // Apply Filters
 //       if (filters.game !== "all") query = query.eq("game", filters.game);
 //       if (filters.stake !== "all") query = query.eq("stake", Number(filters.stake));
 //       if (filters.opponent !== "all") {
@@ -68,22 +67,24 @@
 //   };
 
 //   return (
-//     <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-4">
+//     <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-3">
 //       {loading ? (
-//         <div className="h-[100px] flex items-center justify-center text-sm text-zinc-400">Loading stats...</div>
+//         <div className="h-[80px] flex items-center justify-center text-xs text-zinc-400">Loading stats...</div>
 //       ) : (
-//         <div className="grid grid-cols-3 gap-y-4 gap-x-2">
-//           <div className="flex flex-col items-center text-center"><span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Hands</span><span className="text-lg font-bold text-zinc-900 dark:text-white">{formatNum(totals.hands)}</span></div>
-//           <div className="flex flex-col items-center text-center border-l border-zinc-100 dark:border-zinc-800"><span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Win</span><span className="text-lg font-bold"><ColorValue val={totals.win} /></span></div>
-//           <div className="flex flex-col items-center text-center border-l border-zinc-100 dark:border-zinc-800"><span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Win/100</span><span className="text-lg font-bold"><ColorValue val={totals.winPer100} /></span></div>
-//           <div className="flex flex-col items-center text-center pt-2 border-t border-zinc-100 dark:border-zinc-800"><span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Hours</span><span className="text-lg font-bold text-zinc-900 dark:text-white">{formatNum(totals.hours, 1)}</span></div>
-//           <div className="flex flex-col items-center text-center pt-2 border-t border-l border-zinc-100 dark:border-zinc-800"><span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Win/Hr</span><span className="text-lg font-bold"><ColorValue val={totals.winPerHour} /></span></div>
-//           <div className="flex flex-col items-center text-center pt-2 border-t border-l border-zinc-100 dark:border-zinc-800"><span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Pts/100</span><span className="text-lg font-bold"><ColorValue val={totals.ptsPer100} /></span></div>
+//         <div className="grid grid-cols-3 gap-y-3 gap-x-2">
+//           <div className="flex flex-col items-center text-center"><span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Hands</span><span className="text-base font-bold text-zinc-900 dark:text-white">{formatNum(totals.hands)}</span></div>
+//           <div className="flex flex-col items-center text-center border-l border-zinc-100 dark:border-zinc-800"><span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Win</span><span className="text-base font-bold"><ColorValue val={totals.win} /></span></div>
+//           <div className="flex flex-col items-center text-center border-l border-zinc-100 dark:border-zinc-800"><span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Win/100</span><span className="text-base font-bold"><ColorValue val={totals.winPer100} /></span></div>
+//           <div className="flex flex-col items-center text-center pt-1.5 border-t border-zinc-100 dark:border-zinc-800"><span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Hours</span><span className="text-base font-bold text-zinc-900 dark:text-white">{formatNum(totals.hours, 1)}</span></div>
+//           <div className="flex flex-col items-center text-center pt-1.5 border-t border-l border-zinc-100 dark:border-zinc-800"><span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Win/Hr</span><span className="text-base font-bold"><ColorValue val={totals.winPerHour} /></span></div>
+//           <div className="flex flex-col items-center text-center pt-1.5 border-t border-l border-zinc-100 dark:border-zinc-800"><span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Pts/100</span><span className="text-base font-bold"><ColorValue val={totals.ptsPer100} /></span></div>
 //         </div>
 //       )}
 //     </div>
 //   );
 // }
+
+
 
 
 // components/TotalsBoxes.tsx
@@ -106,15 +107,19 @@ export default function TotalsBoxes({ refreshTrigger, filters }: Props) {
 
   useEffect(() => {
     const fetchAndCalculateTotals = async () => {
-      if (!user?.id) return;
       setLoading(true);
 
       let query = supabase
         .from("sessions")
         .select("hands_played, hours_played, pnl, pts")
-        .eq("telegram_id", user.id.toString())
         .eq("status", "completed");
 
+      // Apply User Filter
+      if (filters.userId !== "all") {
+        query = query.eq("telegram_id", filters.userId);
+      }
+
+      // Apply other Filters
       if (filters.game !== "all") query = query.eq("game", filters.game);
       if (filters.stake !== "all") query = query.eq("stake", Number(filters.stake));
       if (filters.opponent !== "all") {
